@@ -1,0 +1,19 @@
+image: tetraweb/php
+
+stages:
+  - build
+  - deploy
+
+before_script:
+  - npm i
+  - npm run production
+  - chmod 600 $SSH_KEY
+
+deploy_staging:
+  stage: deploy
+  only:
+    - develop
+  script:
+    - rsync -rvzD -e "ssh -o StrictHostKeyChecking=no -i $SSH_KEY" --exclude='.git/' --exclude='.gitlab-ci.yml' ./ ubuntu@ec2-54-216-152-22.eu-west-1.compute.amazonaws.com:/var/www/khonsu/
+    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@ec2-54-216-152-22.eu-west-1.compute.amazonaws.com "cd /var/www/khonsu/ && sudo chmod -R 777 /var/www/khonsu/ && composer install && php artisan migrate && sudo chmod  777 -Rf /var/www/khonsu/ && sudo chown -R www-data:www-data /var/www/khonsu/  &&  npm run build --prefix /var/www/khonsu/frontend/"
+#    - ssh -o StrictHostKeyChecking=no -i $SSH_KEY ubuntu@ec2-54-216-152-22.eu-west-1.compute.amazonaws.com "cd /var/www/khonsu/ && sudo chmod -R 777 /var/www/khonsu/ && composer install && php artisan migrate && sudo find /var/www/khonsu/ -type f -exec chmod 644 {} \; && sudo find /var/www/khonsu/ -type d -exec chmod 775 {} \; && sudo chown -R www-data:www-data /var/www/khonsu/"
