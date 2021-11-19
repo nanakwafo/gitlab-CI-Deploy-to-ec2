@@ -1,0 +1,45 @@
+pipeline
+{
+     agent any
+        stages
+        {
+             stage('Build')
+             {
+                           when
+                           {
+                              branch 'develop'
+                           }
+                            steps
+                            {
+
+                                sshPublisher(
+                                         failOnError: true,
+                                         continueOnError: false,
+                                         publishers: [
+                                            sshPublisherDesc(
+                                                 configName: 'MSPROACTIVE_SSH_CONFIG',
+                                                 verbose: true,
+                                                 transfers: [
+                                                     sshTransfer(
+                                                          sourceFiles: '**/*',
+                                                          excludes:'**/Jenkinsfile',
+                                                          remoteDirectory: 'ms-proactive',
+                                                          execCommand: 'sudo rsync -a /home/ubuntu/ms-proactive /var/www/  && composer install -d /var/www/ms-proactive && sudo chown -R :www-data /var/www/ms-proactive && sudo chmod -R 775 /var/www/ms-proactive/storage && sudo php /var/www/ms-proactive/artisan migrate'
+                                                           // php artisan passport:install
+                                                       )
+                                                  ]
+                                            )
+                                        ]
+                                    )
+
+                               slackSend channel: '#jenkins', message: 'msproactive build success http://18.134.113.213/'
+
+                             }
+             }
+
+
+         }
+
+}
+
+
