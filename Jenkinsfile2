@@ -1,0 +1,65 @@
+pipeline
+{
+     agent any
+        stages
+        {
+             stage('build')
+             {
+                           when
+                           {
+                              branch 'master'
+                           }
+                            steps
+                            {
+                                sshPublisher(
+                                         failOnError: true,
+                                         continueOnError: false,
+                                         publishers: [
+                                            sshPublisherDesc(
+                                                 configName: 'STEPWISEWP_SSH_CONFIG',
+                                                 verbose: true,
+                                                 transfers: [
+                                                     sshTransfer(
+                                                          sourceFiles: '**/public_html/',
+                                                          excludes:'**/wp-config.php,**/wp-content/uploads/*',
+                                                          remoteDirectory: 'stepwise-wp',
+                                                          execCommand: 'sudo rsync -a  stepwise-wp/public_html/ /var/www/stepwise-wp/   && sudo chown -R ubuntu:ubuntu /var/www/stepwise-wp && sudo chmod -R 777 /var/www/stepwise-wp/wp-content/uploads  && sudo composer install -d /var/www/stepwise-wp/wp-content/themes/pd-wp-framework && npm --prefix /var/www/stepwise-wp/wp-content/themes/pd-wp-framework install && npm --prefix /var/www/stepwise-wp/wp-content/themes/pd-wp-framework run prod'
+                                                       )
+                                                  ]
+                                            )
+                                        ]
+                                    )
+                               slackSend channel: '#ps-stepwise', message: 'Hi all, am jenkins. Build has been successfull http://mymentum.perfect-host.co.uk/'
+                             }
+             }
+              stage('build-pragmaticstaging')
+                          {
+                                        when
+                                        {
+                                           branch 'develop'
+                                        }
+                                         steps
+                                         {
+                                             sshPublisher(
+                                                      failOnError: true,
+                                                      continueOnError: false,
+                                                      publishers: [
+                                                         sshPublisherDesc(
+                                                              configName: 'STEPWISEWP_SSH_CONFIG_DEVELOP',
+                                                              verbose: true,
+                                                              transfers: [
+                                                                  sshTransfer(
+                                                                       sourceFiles: '**/public_html/',
+                                                                       excludes:'**/wp-config.php,**/wp-content/uploads/*',
+                                                                       remoteDirectory: 'stepwise-wp',
+                                                                       execCommand: 'sudo rsync -a  stepwise-wp/public_html/ /var/www/stepwise-wp/   && sudo chown -R ubuntu:ubuntu /var/www/stepwise-wp && sudo chmod -R 777 /var/www/stepwise-wp/wp-content/uploads && sudo composer install -d /var/www/stepwise-wp/wp-content/themes/pd-wp-framework  && npm --prefix /var/www/stepwise-wp/wp-content/themes/pd-wp-framework install && npm --prefix /var/www/stepwise-wp/wp-content/themes/pd-wp-framework run prod'
+                                                                    )
+                                                               ]
+                                                         )
+                                                     ]
+                                                 )
+                                            slackSend channel: '#ps-stepwise', message: 'Hi all, am jenkins. Build has been successfull http://stepwise.pragmaticdigital.co.uk/'
+                                          }
+                          }
+        }
+ }
