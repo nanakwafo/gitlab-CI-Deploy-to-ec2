@@ -1,0 +1,71 @@
+pipeline
+{
+     agent any
+//         environment
+//         {
+//         }
+        stages
+        {
+             stage('Build')
+             {
+                           when
+                           {
+                              branch 'feature/STEP-2-laravel-setup-from-default-instal'
+                           }
+                            steps
+                            {
+
+                                sshPublisher(
+                                         failOnError: true,
+                                         continueOnError: false,
+                                         publishers: [
+                                            sshPublisherDesc(
+                                                 configName: 'STEPWISEAPI_SSH_CONFIG',
+                                                 verbose: true,
+                                                 transfers: [
+                                                     sshTransfer(
+                                                          sourceFiles: '**/*',
+                                                          excludes:'**/Jenkinsfile',
+                                                          remoteDirectory: 'stepwiseapi',
+                                                          execCommand: 'sudo rsync -a /home/ubuntu/stepwiseapi /var/www/  && composer install -d /var/www/stepwiseapi && sudo chown -R :www-data /var/www/stepwiseapi && sudo chmod -R 775 /var/www/stepwiseapi/storage && sudo php /var/www/stepwiseapi/artisan migrate'
+                                                           // php artisan passport:install
+                                                           // sudo php artisan l5-swagger:generate
+                                                           // php artisan queue:table
+                                                           // && sudo php /var/www/stepwiseapi/artisan queue:table
+                                                       )
+                                                  ]
+                                            )
+                                        ]
+                                    )
+
+                               slackSend channel: '#ps-stepwise', message: 'Stepwise build success http://3.9.197.12/api/documentation'
+
+                             }
+             }
+
+//                 stage('Test')
+//                 {
+//                    steps{
+//                       sshagent(['STEPWISEAPI_SSH_CONFIG'])
+//                            {
+//                               sh """ssh -tt -o StrictHostKeyChecking=no ubuntu@$STEPWISE_PUBLIC_IP << EOF
+//                               cd /var/www/stepwiseapi
+//                               ls -la
+//                               vendor/bin/phpunit
+//                               exit
+//                               EOF"""
+//                            }
+//                    }
+//                  }
+
+
+        }
+
+ }
+
+// DB_DATABASE=stepwiseapi
+// DB_USERNAME=stepwiseapi
+// DB_PASSWORD=VT6M~rK1Ww[5f87J
+
+
+
